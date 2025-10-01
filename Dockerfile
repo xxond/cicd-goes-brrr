@@ -7,16 +7,22 @@ COPY . .
 ARG VERSION=0.0.0
 ARG GIT_SHA=dev
 ARG BUILD_TIME=unknown
-ARG CHANNEL=dev
 ENV CGO_ENABLED=0
 RUN go build -ldflags="-s -w" -o /out/hello .
 
 # Runtime
 FROM gcr.io/distroless/base-debian12
-ENV VERSION=${VERSION}
-ENV GIT_SHA=${GIT_SHA}
-ENV BUILD_TIME=${BUILD_TIME}
-ENV CHANNEL=${CHANNEL}
+
+# IMPORTANT: re-declare ARGs in this stage so we can use them
+ARG VERSION=0.0.0
+ARG GIT_SHA=dev
+ARG BUILD_TIME=unknown
+
+# Bake them in as ENV so the app can read them at runtime
+ENV VERSION=$VERSION
+ENV GIT_SHA=$GIT_SHA
+ENV BUILD_TIME=$BUILD_TIME
+
 EXPOSE 8080
 COPY --from=build /out/hello /hello
 USER 65532:65532
