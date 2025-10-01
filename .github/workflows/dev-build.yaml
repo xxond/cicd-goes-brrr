@@ -1,0 +1,65 @@
+name: dev-build
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REPO: ghcr.io/${{ github.repository }}
+
+concurrency:
+  group: dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive metadata
+        id: meta
+        shell: bash
+        run: |
+          echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push (single build → two tags)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REPO }}:sha-${{ steps.meta.outputs.short_sha }}
+            ${{ env.REPO }}:dev
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            GIT_SHA=${{ github.sha }}
+            BUILD_TIME=${{ steps.meta.outputs.build_time }}
+          sbom: false
+          provenance: false
+
+      - name: Smoke test built image
+        shell: bash
+        run: |
+          docker run -d --rm -p 18080:8080 --name myapp ${{ env.REPO }}:sha-${{ steps.meta.outputs.short_sha }}
+          for i in {1..30}; do curl -fsS http://127.0.0.1:18080/healthz && break || sleep 0.5; done
+          curl -fsS http://127.0.0.1:18080/version | tee version.json
+          docker rm -f myapp
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: version-json
+          path: version.json
