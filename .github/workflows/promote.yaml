@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.REPO }}:${{ steps.meta.outputs.semver }} \
+            --tag ${{ env.REPO }}:v${{ steps.meta.outputs.semver }} \
             --tag ${{ env.REPO }}:latest \
             ${{ env.REPO }}:sha-${{ steps.meta.outputs.short_sha }}
 
