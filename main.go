@@ -51,4 +51,66 @@ func main() {
 	// Root: human-friendly banner
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Release-Channel", vi.Channel)
-		w.Header().Set("Content-T
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		fmt.Fprintf(w, "[%s] hello %s (sha:%s)\n", vi.Channel, vi.Version, shortSHA(vi.GitSHA, 7))
+	})
+
+	// JSON version endpoint
+	mux.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Release-Channel", vi.Channel)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		_ = json.NewEncoder(w).Encode(vi)
+	})
+
+	// Simple healthcheck
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
+
+	// Optionally show env (handy for debugging; safe to keep or remove)
+	mux.HandleFunc("/env", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"VERSION":   vi.Version,
+			"GIT_SHA":   vi.GitSHA,
+			"BUILD_TIME": vi.BuiltAt,
+			"CHANNEL":   vi.Channel,
+		})
+	})
+
+	// Basic server with sane timeouts
+	srv := &http.Server{
+		Addr:              ":8080",
+		Handler:           logging(mux),
+		ReadTimeout:       5 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	log.Printf("listening on %s (version=%s, sha=%s, channel=%s)", srv.Addr, vi.Version, shortSHA(vi.GitSHA, 7), vi.Channel)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("server error: %v", err)
+	}
+}
+
+func logging(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		lw := &logWriter{ResponseWriter: w, status: 200}
+		next.ServeHTTP(lw, r)
+		log.Printf("%s %s %d %s", r.Method, r.URL.Path, lw.status, time.Since(start))
+	})
+}
+
+type logWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (lw *logWriter) WriteHeader(code int) {
+	lw.status = code
+	lw.ResponseWriter.WriteHeader(code)
+}
