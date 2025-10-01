@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  web:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-0.0.0}
+        GIT_SHA: ${GIT_SHA:-dev}
+        BUILD_TIME: ${BUILD_TIME:-local}
+    image: ghcr.io/your-org/hello-version:${TAG:-dev}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
