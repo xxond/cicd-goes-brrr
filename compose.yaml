@@ -7,7 +7,7 @@ services:
         VERSION: ${VERSION:-0.0.0}
         GIT_SHA: ${GIT_SHA:-dev}
         BUILD_TIME: ${BUILD_TIME:-local}
-    image: ghcr.io/your-org/hello-version:${TAG:-dev}
+    image: ghcr.io/xxond/done-brrr:${TAG:-dev}
     ports:
       - "8080:8080"
     healthcheck:
