@@ -62,7 +62,7 @@ jobs:
 
       - name: Show resulting tags
         run: |
-          docker buildx imagetools inspect ${{ env.REPO }}:${{ steps.meta.outputs.semver }}
+          docker buildx imagetools inspect ${{ env.REPO }}:v${{ steps.meta.outputs.semver }}
           docker buildx imagetools inspect ${{ env.REPO }}:latest
 
   # Optional: deploy to PROD using :1.2.3
