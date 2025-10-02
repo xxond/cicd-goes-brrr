@@ -9,7 +9,7 @@
   "containerEnv": {
     "IMAGE_REF": "ghcr.io/xxond/cicd-goes-brrr:latest",
     "CHANNEL": "prod",
-    "VERSION": "latest" // tip: on promotion, you can change this to the semver (e.g., 1.2.3)
+    "VERSION": "latest"
   },
   "postCreateCommand": "docker version && docker compose version",
   "postStartCommand": "docker compose -f compose.codespace.yml pull && docker compose -f compose.codespace.yml up -d",
