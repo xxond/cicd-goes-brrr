@@ -1,0 +1,22 @@
+{
+  "name": "cicd-goes-brrr (PROD)",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [8080],
+  "portsAttributes": { "8080": { "label": "prod app", "onAutoForward": "openBrowser" } },
+  "containerEnv": {
+    "IMAGE_REF": "ghcr.io/xxond/cicd-goes-brrr:latest",
+    "CHANNEL": "prod",
+    "VERSION": "latest" // tip: on promotion, you can change this to the semver (e.g., 1.2.3)
+  },
+  "postCreateCommand": "docker version && docker compose version",
+  "postStartCommand": "docker compose -f compose.codespace.yml pull && docker compose -f compose.codespace.yml up -d",
+  "customizations": {
+    "vscode": {
+      "extensions": ["golang.go", "ms-azuretools.vscode-docker", "github.vscode-github-actions"]
+    }
+  },
+  "remoteUser": "vscode"
+}

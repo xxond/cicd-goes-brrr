@@ -1,0 +1,22 @@
+{
+  "name": "cicd-goes-brrr (DEV)",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [8080],
+  "portsAttributes": { "8080": { "label": "dev app", "onAutoForward": "openBrowser" } },
+  "containerEnv": {
+    "IMAGE_REF": "ghcr.io/xxond/cicd-goes-brrr:dev",
+    "CHANNEL": "dev",
+    "VERSION": "dev-codespace"
+  },
+  "postCreateCommand": "docker version && docker compose version",
+  "postStartCommand": "docker compose -f compose.codespace.yml pull && docker compose -f compose.codespace.yml up -d",
+  "customizations": {
+    "vscode": {
+      "extensions": ["golang.go", "ms-azuretools.vscode-docker", "github.vscode-github-actions"]
+    }
+  },
+  "remoteUser": "vscode"
+}
